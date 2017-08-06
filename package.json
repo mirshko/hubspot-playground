@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "start": "rm -rf ./build && backpack build && node ./build/main.js",
+    "dev": "backpack dev",
+    "build": "backpack build"
+  },
+  "devDependencies": {
+    "backpack-core": "^0.4.1"
+  },
+  "dependencies": {
+    "axios": "^0.16.2",
+    "dotenv": "^4.0.0"
+  }
+}
