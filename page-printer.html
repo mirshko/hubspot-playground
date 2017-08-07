@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- BROWSER -->
+    <meta charset="utf-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <!-- PAGE -->
+    <title>HubSpot Page Printer</title>
+    <meta name="author" content="Jeff Reiner"/>
+    <meta name="description" content="Helps you get a list of all your HubSpot COS pages"/>
+
+    <!-- STYLES -->
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css@0.2.14/dist/spectre.min.css"/>
+
+    <!-- FAVICONS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png"/>
+    <link rel="icon" type="image/png" href="favicon/favicon-32x32.png" sizes="32x32"/>
+    <link rel="icon" type="image/png" href="favicon/favicon-16x16.png" sizes="16x16"/>
+    <link rel="manifest" href="favicon/manifest.json"/>
+    <link rel="mask-icon" href="favicon/safari-pinned-tab.svg" color="#f7751f"/>
+    <link rel="shortcut icon" href="favicon/favicon.ico"/>
+    <meta name="msapplication-config" content="/favicon/browserconfig.xml"/>
+    <meta name="theme-color" content="#f7751f"/>
+    
+    {{ standard_header_includes }}
+  </head>
+
+  <style media="screen">
+    .form-input,
+    .form-select {
+      width: 320px;
+      max-width: 100%;
+    }
+    main {
+      margin: 5rem;
+    }
+    @media only screen and (max-width: 768px) {
+      main {
+        margin: 2rem;
+      }
+    }
+    @media only screen and (max-width: 320px) {
+      main {
+        margin: 1rem;
+      }
+    }
+    .json {
+      margin-top: 5rem;
+      background: #f8f9fa;
+      color: inherit;
+      display: block;
+      line-height: inherit;
+      overflow-x: auto;
+      padding: 3rem;
+      width: 100%;
+      border-radius: 2px;
+    }
+    .json div {
+      font-family: monospace;
+    }
+    .json div:not(:last-child) { margin-bottom: .8rem; }
+  </style>
+
+  <body>
+    <main id="app">
+      <div class="container">
+        <div>
+          <div class="form-group">
+            <label for="hapiKey" class="form-label">HubSpot API Key</label>
+            <input id="hapiKey" class="form-input" type="text" placeholder="HAPI Key" v-model="form.hapiKey">
+          </div>
+          <div class="form-group">
+            <label for="form-select" class="form-label">Page Subcategory</label>
+            <select class="form-select" v-model="form.subcategory">
+              <option value="landing_page">Landing Page</option>
+              <option value="site_page">Site Page</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="returnLimit" class="form-label">Page Limit</label>
+            <input id="returnLimit" class="form-input" type="number" v-model="form.limit">
+          </div>
+          <div class="form-group" style="margin-bottom: 2rem;">
+            <label class="form-switch">
+              <input type="checkbox" v-model="form.draft"/>
+              <i class="form-icon"></i>Include Draft Pages
+            </label>
+          </div>
+          <div class="form-group">
+            <a class="btn btn-primary" :class="{ loading: isLoading }" @click="printJSON()">FETCH MY PAGES</a>
+          </div>
+        </div>
+        <div class="json">
+          <div v-for="page in pages"><$page.id$>, <$page.name$>, <$page.campaign_name$>, <a :href="page.url"><$page.url$></a>, <$page.template_path$></div>
+        </div>
+        <div style="padding: 24px;">
+          <div v-text="error.message"></div>
+        </div>
+      </div>
+    </main>
+    
+    {{ standard_footer_includes }}
+    
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>		
+      new Vue({
+        delimiters: ['<$', '$>'],
+        el: '#app',
+        data: function () {
+          return {
+            form: {
+              hapiKey: '',
+              subcategory: 'site_page',
+              draft: false,
+              limit: 100
+            },
+            isLoading: false,
+            pages: [],
+            error: []
+          }
+        },
+        methods: {
+          printJSON () {
+            // VARS
+            const key = this.form.hapiKey;
+            const draft = this.form.draft;
+            const subcategory = this.form.subcategory;
+            const limit = this.form.limit;
+            
+            // CLEAR OLD ERROR / OLD RESPONSE
+            this.error = [];
+            this.pages = [];
+            
+            // MAKE THE BUTTON LOAD
+            this.isLoading = true
+
+            axios.get('https://api.hubapi.com/content/api/v2/pages', {
+              params: {
+                'hapikey': key,
+                'subcategory': subcategory,
+                'is_draft': draft,
+                'limit': limit
+              }
+            })
+              .then(res => {
+                this.pages = res.data.objects
+                this.isLoading = false
+              })
+              .catch(err => {
+                this.error = err.response.data
+                this.isLoading = false
+              })
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
